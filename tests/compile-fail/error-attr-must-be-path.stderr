@@ -1,0 +1,29 @@
+error: expected derivative clone_with attribute to be a string: `clone_with = "..."`
+  --> $DIR/error-attr-must-be-path.rs:11:35
+   |
+11 |     #[derivative(Clone(clone_with=42))]
+   |                                   ^^
+
+error: expected derivative format_with attribute to be a string: `format_with = "..."`
+  --> $DIR/error-attr-must-be-path.rs:19:36
+   |
+19 |     #[derivative(Debug(format_with=42))]
+   |                                    ^^
+
+error: expected derivative compare_with attribute to be a string: `compare_with = "..."`
+  --> $DIR/error-attr-must-be-path.rs:27:41
+   |
+27 |     #[derivative(PartialEq(compare_with=42))]
+   |                                         ^^
+
+error: expected derivative value attribute to be a string: `value = "..."`
+  --> $DIR/error-attr-must-be-path.rs:35:32
+   |
+35 |     #[derivative(Default(value=42))]
+   |                                ^^
+
+error: expected derivative hash_with attribute to be a string: `hash_with = "..."`
+  --> $DIR/error-attr-must-be-path.rs:43:38
+   |
+43 |     #[derivative(PartialEq(hash_with=42))]
+   |                                      ^^
