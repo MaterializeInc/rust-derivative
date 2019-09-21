@@ -42,7 +42,7 @@ pub enum Style {
 }
 
 impl<'a> Input<'a> {
-    pub fn from_ast(item: &'a syn::DeriveInput) -> Result<Input<'a>, String> {
+    pub fn from_ast(item: &'a syn::DeriveInput) -> Result<Input<'a>, syn::parse::Error> {
         let attrs = try!(attr::Input::from_ast(&item.attrs));
 
         let body = match item.data {
@@ -80,7 +80,7 @@ impl<'a> Body<'a> {
 
 fn enum_from_ast<'a>(
     variants: &'a syn::punctuated::Punctuated<syn::Variant, syn::token::Comma>,
-) -> Result<Vec<Variant<'a>>, String> {
+) -> Result<Vec<Variant<'a>>, syn::parse::Error> {
     variants
         .iter()
         .map(|variant| {
@@ -95,7 +95,7 @@ fn enum_from_ast<'a>(
         .collect()
 }
 
-fn struct_from_ast<'a>(fields: &'a syn::Fields) -> Result<(Style, Vec<Field<'a>>), String> {
+fn struct_from_ast<'a>(fields: &'a syn::Fields) -> Result<(Style, Vec<Field<'a>>), syn::parse::Error> {
     match *fields {
         syn::Fields::Named(ref fields) => Ok((Style::Struct, try!(fields_from_ast(&fields.named)))),
         syn::Fields::Unnamed(ref fields) => {
@@ -107,7 +107,7 @@ fn struct_from_ast<'a>(fields: &'a syn::Fields) -> Result<(Style, Vec<Field<'a>>
 
 fn fields_from_ast<'a>(
     fields: &'a syn::punctuated::Punctuated<syn::Field, syn::token::Comma>,
-) -> Result<Vec<Field<'a>>, String> {
+) -> Result<Vec<Field<'a>>, syn::parse::Error> {
     fields
         .iter()
         .map(|field| {

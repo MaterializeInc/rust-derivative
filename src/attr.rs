@@ -1,5 +1,6 @@
 use proc_macro2;
 use syn;
+use syn::spanned::Spanned;
 
 /// Represent the `derivative` attributes on the input type (`struct`/`enum`).
 #[derive(Debug, Default)]
@@ -202,7 +203,9 @@ macro_rules! for_all_attr {
                 let MetaItem($name, $value) = try!(meta_item);
                 match $name.to_string().as_ref() {
                     $($body)*
-                    _ => return Err(format!("unknown trait `{}`", $name)),
+                    _ => {
+                        return Err(syn::parse::Error::new($name.span(), format_args!("unknown trait `{}`", $name)));
+                    }
                 }
             }
         }
@@ -227,13 +230,17 @@ macro_rules! match_attributes {
                 Some(ident) => {
                     match ident.to_string().as_ref() {
                         $($body)*
-                        _ => return Err(format!("unknown attribute `{}`", ident)),
+                        _ => {
+                            return Err(syn::parse::Error::new($value.span(), format_args!("unknown attribute `{}`", ident)));
+                        }
                     }
                 }
                 None => {
                     match $value.expect("Expected value to be passed").value().as_ref() {
                         $($body)*
-                        _ => return Err("unknown attribute".to_string()),
+                        _ => {
+                            return Err(syn::parse::Error::new($value.span(), "unknown attribute"));
+                        },
                     }
                 }
             }
@@ -243,7 +250,7 @@ macro_rules! match_attributes {
 
 impl Input {
     /// Parse the `derivative` attributes on a type.
-    pub fn from_ast(attrs: &[syn::Attribute]) -> Result<Input, String> {
+    pub fn from_ast(attrs: &[syn::Attribute]) -> Result<Input, syn::parse::Error> {
         let mut input = Input::default();
 
         for_all_attr! {
@@ -411,7 +418,7 @@ impl Input {
 
 impl Field {
     /// Parse the `derivative` attributes on a type.
-    pub fn from_ast(field: &syn::Field) -> Result<Field, String> {
+    pub fn from_ast(field: &syn::Field) -> Result<Field, syn::parse::Error> {
         let mut out = Field::default();
 
         for_all_attr! {
@@ -421,7 +428,7 @@ impl Field {
                     for value in values;
                     "bound" => try!(parse_bound(&mut out.clone.bounds, value)),
                     "clone_with" => {
-                        let path = try!(value.ok_or_else(|| "`clone_with` needs a value".to_string()));
+                        let path = try!(value.ok_or_else(|| syn::parse::Error::new(value.span(), "`clone_with` needs a value")));
                         out.clone.clone_with = Some(try!(parse_str_lit(&path)));
                     }
                 }
@@ -431,7 +438,7 @@ impl Field {
                     for value in values;
                     "bound" => try!(parse_bound(&mut out.debug.bounds, value)),
                     "format_with" => {
-                        let path = try!(value.ok_or_else(|| "`format_with` needs a value".to_string()));
+                        let path = try!(value.ok_or_else(|| syn::parse::Error::new(value.span(), "`format_with` needs a value")));
                         out.debug.format_with = Some(try!(parse_str_lit(&path)));
                     }
                     "ignore" => {
@@ -444,7 +451,7 @@ impl Field {
                     for value in values;
                     "bound" => try!(parse_bound(&mut out.default.bounds, value)),
                     "value" => {
-                        let value = try!(value.ok_or_else(|| "`value` needs a value".to_string()));
+                        let value = try!(value.ok_or_else(|| syn::parse::Error::new(value.span(), "`value` needs a value")));
                         out.default.value = Some(try!(parse_str_lit(&value)));
                     }
                 }
@@ -460,7 +467,7 @@ impl Field {
                     for value in values;
                     "bound" => try!(parse_bound(&mut out.hash.bounds, value)),
                     "hash_with" => {
-                        let path = try!(value.ok_or_else(|| "`hash_with` needs a value".to_string()));
+                        let path = try!(value.ok_or_else(|| syn::parse::Error::new(value.span(), "`hash_with` needs a value")));
                         out.hash.hash_with = Some(try!(parse_str_lit(&path)));
                     }
                     "ignore" => {
@@ -473,7 +480,7 @@ impl Field {
                     for value in values;
                     "bound" => try!(parse_bound(&mut out.partial_eq.bounds, value)),
                     "compare_with" => {
-                        let path = try!(value.ok_or_else(|| "`compare_with` needs a value".to_string()));
+                        let path = try!(value.ok_or_else(|| syn::parse::Error::new(value.span(), "`compare_with` needs a value")));
                         out.partial_eq.compare_with = Some(try!(parse_str_lit(&path)));
                     }
                     "ignore" => {
@@ -486,7 +493,7 @@ impl Field {
                     for value in values;
                     "bound" => try!(parse_bound(&mut out.partial_ord.bounds, value)),
                     "compare_with" => {
-                        let path = try!(value.ok_or_else(|| "`compare_with` needs a value".to_string()));
+                        let path = try!(value.ok_or_else(|| syn::parse::Error::new(value.span(), "`compare_with` needs a value")));
                         out.partial_ord.compare_with = Some(try!(parse_str_lit(&path)));
                     }
                     "ignore" => {
@@ -499,7 +506,7 @@ impl Field {
                     for value in values;
                     "bound" => try!(parse_bound(&mut out.ord.bounds, value)),
                     "compare_with" => {
-                        let path = try!(value.ok_or_else(|| "`compare_with` needs a value".to_string()));
+                        let path = try!(value.ok_or_else(|| syn::parse::Error::new(value.span(), "`compare_with` needs a value")));
                         out.ord.compare_with = Some(try!(parse_str_lit(&path)));
                     }
                     "ignore" => {
@@ -610,11 +617,14 @@ struct MetaItem<'a>(
 );
 
 /// Parse an arbitrary item for our limited `MetaItem` subset.
-fn read_items(item: &syn::NestedMeta) -> Result<MetaItem, String> {
+fn read_items(item: &syn::NestedMeta) -> Result<MetaItem, syn::parse::Error> {
     let item = match *item {
         syn::NestedMeta::Meta(ref item) => item,
-        syn::NestedMeta::Literal(..) => {
-            return Err("Expected meta-item but found literal".to_string());
+        syn::NestedMeta::Literal(ref lit) => {
+            return Err(syn::parse::Error::new(
+                lit.span(),
+                "Expected meta-item but found literal",
+            ));
         }
     };
     match *item {
@@ -637,7 +647,7 @@ fn read_items(item: &syn::NestedMeta) -> Result<MetaItem, String> {
 
                         Ok((Some(name), Some(value)))
                     } else {
-                        Err("Expected named value".to_string())
+                        Err(syn::parse::Error::new(value.span(), "Expected named value"))
                     }
                 })
                 .collect());
@@ -684,16 +694,17 @@ fn parse_boolean_meta_item(
     item: Option<&syn::LitStr>,
     default: bool,
     name: &str,
-) -> Result<bool, String> {
-    let item = item.map(|item| item.value());
-    match item.as_ref().map(|item| item.as_ref()) {
-        Some("true") => Ok(true),
-        Some("false") => Ok(false),
-        Some(val) => {
+) -> Result<bool, syn::parse::Error> {
+    let item = item.map(|item| (item.span(), item.value()));
+    match item.as_ref().map(|&(span, ref item)| (span, item.as_ref())) {
+        Some((_, "true")) => Ok(true),
+        Some((_, "false")) => Ok(false),
+        Some((span, val)) => {
             if val == name {
                 Ok(true)
             } else {
-                Err(format!("Invalid value for `{}`: `{}`", name, val))
+                let message = format!("Invalid value for `{}`: `{}`", name, val);
+                Err(syn::parse::Error::new(span, message))
             }
         }
         None => Ok(default),
@@ -704,8 +715,9 @@ fn parse_boolean_meta_item(
 fn parse_bound(
     opt_bounds: &mut Option<Vec<syn::WherePredicate>>,
     value: Option<&syn::LitStr>,
-) -> Result<(), String> {
-    let bound = try!(value.ok_or_else(|| "`bound` needs a value".to_string()));
+) -> Result<(), syn::parse::Error> {
+    let bound =
+        try!(value.ok_or_else(|| syn::parse::Error::new(value.span(), "`bound` needs a value")));
 
     let bound_value = bound.value();
 
@@ -714,7 +726,7 @@ fn parse_bound(
 
         let bounds = parse_str_lit::<syn::WhereClause>(&where_string)
             .map(|wh| wh.predicates.into_iter().collect())
-            .map_err(|_| "Could not parse `bound`".to_string());
+            .map_err(|_| syn::parse::Error::new(where_string.span(), "Could not parse `bound`"));
 
         Some(try!(bounds))
     } else {
@@ -724,20 +736,25 @@ fn parse_bound(
     Ok(())
 }
 
-fn parse_str_lit<T>(value: &syn::LitStr) -> Result<T, String>
+fn parse_str_lit<T>(value: &syn::LitStr) -> Result<T, syn::parse::Error>
 where
     T: syn::parse::Parse,
 {
-    value.parse().map_err(|e| e.to_string())
+    value.parse()
 }
 
-fn ensure_str_lit<'a>(attr_name: &str, lit: &'a syn::Lit) -> Result<&'a syn::LitStr, String> {
+fn ensure_str_lit<'a>(
+    attr_name: &str,
+    lit: &'a syn::Lit,
+) -> Result<&'a syn::LitStr, syn::parse::Error> {
     if let syn::Lit::Str(ref lit) = *lit {
         Ok(lit)
     } else {
-        Err(format!(
+        let message = format!(
             "expected derivative {} attribute to be a string: `{} = \"...\"`",
             attr_name, attr_name
-        ))
+        );
+
+        Err(syn::parse::Error::new(lit.span(), message))
     }
 }

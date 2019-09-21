@@ -29,14 +29,13 @@ pub fn derive_eq(input: &ast::Input) -> proc_macro2::TokenStream {
 }
 
 /// Derive `PartialEq` for `input`.
-pub fn derive_partial_eq(input: &ast::Input) -> Result<proc_macro2::TokenStream, String> {
+pub fn derive_partial_eq(input: &ast::Input) -> Result<proc_macro2::TokenStream, syn::parse::Error> {
     if let ast::Body::Enum(_) = input.body {
         if !input.attrs.partial_eq_on_enum() {
-            return Err(
-                "can't use `#[derivative(PartialEq)]` on an enumeration without \
-                 `feature_allow_slow_enum`; see the documentation for more details"
-                    .into(),
-            );
+            let message = "can't use `#[derivative(PartialEq)]` on an enumeration without \
+                           `feature_allow_slow_enum`; see the documentation for more details";
+
+            return Err(syn::parse::Error::new(input.span, message));
         }
     }
 
@@ -99,14 +98,13 @@ pub fn derive_partial_eq(input: &ast::Input) -> Result<proc_macro2::TokenStream,
 }
 
 /// Derive `PartialOrd` for `input`.
-pub fn derive_partial_ord(input: &ast::Input) -> Result<proc_macro2::TokenStream, String> {
+pub fn derive_partial_ord(input: &ast::Input) -> Result<proc_macro2::TokenStream, syn::parse::Error> {
     if let ast::Body::Enum(_) = input.body {
         if !input.attrs.partial_ord_on_enum() {
-            return Err(
-                "can't use `#[derivative(PartialOrd)]` on an enumeration without \
-                 `feature_allow_slow_enum`; see the documentation for more details"
-                    .into(),
-            );
+            let message = "can't use `#[derivative(PartialOrd)]` on an enumeration without \
+                           `feature_allow_slow_enum`; see the documentation for more details";
+
+            return Err(syn::parse::Error::new(input.span, message));
         }
     }
 
@@ -188,12 +186,13 @@ pub fn derive_partial_ord(input: &ast::Input) -> Result<proc_macro2::TokenStream
 }
 
 /// Derive `Ord` for `input`.
-pub fn derive_ord(input: &ast::Input) -> Result<proc_macro2::TokenStream, String> {
+pub fn derive_ord(input: &ast::Input) -> Result<proc_macro2::TokenStream, syn::parse::Error> {
     if let ast::Body::Enum(_) = input.body {
         if !input.attrs.ord_on_enum() {
-            return Err("can't use `#[derivative(Ord)]` on an enumeration without \
-                        `feature_allow_slow_enum`; see the documentation for more details"
-                .into());
+            let message = "can't use `#[derivative(Ord)]` on an enumeration without \
+                           `feature_allow_slow_enum`; see the documentation for more details";
+
+            return Err(syn::parse::Error::new(input.span, message));
         }
     }
 

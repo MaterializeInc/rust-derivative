@@ -33,7 +33,7 @@ mod utils;
 
 use proc_macro::TokenStream;
 
-fn derive_impls(input: &ast::Input) -> Result<proc_macro2::TokenStream, String> {
+fn derive_impls(input: &ast::Input) -> Result<proc_macro2::TokenStream, syn::parse::Error> {
     let mut tokens = proc_macro2::TokenStream::new();
 
     if input.attrs.clone.is_some() {
@@ -67,8 +67,8 @@ fn derive_impls(input: &ast::Input) -> Result<proc_macro2::TokenStream, String> 
     Ok(tokens)
 }
 
-fn detail(input: TokenStream) -> Result<TokenStream, String> {
-    let parsed = syn::parse::<syn::DeriveInput>(input).map_err(|e| e.to_string())?;
+fn detail(input: TokenStream) -> Result<TokenStream, syn::parse::Error> {
+    let parsed = syn::parse::<syn::DeriveInput>(input)?;
     let output = derive_impls(&ast::Input::from_ast(&parsed)?)?;
     Ok(output.into())
 }
@@ -77,6 +77,6 @@ fn detail(input: TokenStream) -> Result<TokenStream, String> {
 pub fn derivative(input: TokenStream) -> TokenStream {
     match detail(input) {
         Ok(output) => output,
-        Err(e) => panic!(e),
+        Err(e) => e.to_compile_error().into(),
     }
 }
