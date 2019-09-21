@@ -1,0 +1,11 @@
+error: unknown trait `Baz`
+ --> $DIR/error-unknown-trait.rs:8:14
+  |
+8 | #[derivative(Baz)]
+  |              ^^^
+
+error: unknown trait `Baz`
+  --> $DIR/error-unknown-trait.rs:14:18
+   |
+14 |     #[derivative(Baz="wat")]
+   |                  ^^^
