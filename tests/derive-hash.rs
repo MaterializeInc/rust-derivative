@@ -63,8 +63,20 @@ fn main() {
             }
         }
 
-        assert_eq!(fake_hash(Ours { foo: 0, bar: "bar" }), fake_hash(Theirs { foo: 0, bar: "bar" }));
-        assert_eq!(fake_hash(Ours { foo: 42, bar: "bar" }), fake_hash(Theirs { foo: 42, bar: "bar" }));
+        assert_eq!(
+            fake_hash(Ours { foo: 0, bar: "bar" }),
+            fake_hash(Theirs { foo: 0, bar: "bar" })
+        );
+        assert_eq!(
+            fake_hash(Ours {
+                foo: 42,
+                bar: "bar"
+            }),
+            fake_hash(Theirs {
+                foo: 42,
+                bar: "bar"
+            })
+        );
     }
 
     {
@@ -72,8 +84,8 @@ fn main() {
             struct<'a> (u8, &'a str);
         }
 
-        assert_eq!(fake_hash(Ours ( 0, "bar" )), fake_hash(Theirs ( 0, "bar" )));
-        assert_eq!(fake_hash(Ours ( 42, "bar" )), fake_hash(Theirs ( 42, "bar" )));
+        assert_eq!(fake_hash(Ours(0, "bar")), fake_hash(Theirs(0, "bar")));
+        assert_eq!(fake_hash(Ours(42, "bar")), fake_hash(Theirs(42, "bar")));
     }
 
     {
@@ -117,7 +129,7 @@ fn main() {
         #[derivative(Hash)]
         struct Ours<'a> {
             foo: u8,
-            #[derivative(Hash="ignore")]
+            #[derivative(Hash = "ignore")]
             bar: &'a str,
             baz: i64,
         }
@@ -128,7 +140,46 @@ fn main() {
             baz: i64,
         }
 
-        assert_eq!(fake_hash(Ours { foo: 0, bar: "bar", baz: 312 }), fake_hash(Theirs { foo: 0, baz: 312 }));
-        assert_eq!(fake_hash(Ours { foo: 42, bar: "bar", baz: 312 }), fake_hash(Theirs { foo: 42, baz: 312 }));
+        assert_eq!(
+            fake_hash(Ours {
+                foo: 0,
+                bar: "bar",
+                baz: 312
+            }),
+            fake_hash(Theirs { foo: 0, baz: 312 })
+        );
+        assert_eq!(
+            fake_hash(Ours {
+                foo: 42,
+                bar: "bar",
+                baz: 312
+            }),
+            fake_hash(Theirs { foo: 42, baz: 312 })
+        );
+    }
+
+    {
+        fn opposite_hash<H>(value: &i8, state: &mut H)
+        where
+            H: std::hash::Hasher,
+        {
+            state.write_i8(-value);
+        }
+
+        #[derive(Derivative)]
+        #[derivative(Hash)]
+        struct Ours {
+            #[derivative(Hash(hash_with = "opposite_hash"))]
+            foo: i8,
+        }
+
+        #[derive(Hash)]
+        struct Theirs {
+            foo: i8,
+        }
+
+        for i in -100..100 {
+            assert_eq!(fake_hash(Ours { foo: -i }), fake_hash(Theirs { foo: i }));
+        }
     }
 }
