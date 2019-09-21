@@ -1,0 +1,35 @@
+error: expected derivative bound attribute to be a string: `bound = "..."`
+  --> $DIR/error-bound-must-be-string.rs:11:30
+   |
+11 |     #[derivative(Clone(bound=42))]
+   |                              ^^
+
+error: expected derivative bound attribute to be a string: `bound = "..."`
+  --> $DIR/error-bound-must-be-string.rs:19:30
+   |
+19 |     #[derivative(Debug(bound=42))]
+   |                              ^^
+
+error: expected derivative bound attribute to be a string: `bound = "..."`
+  --> $DIR/error-bound-must-be-string.rs:27:34
+   |
+27 |     #[derivative(PartialEq(bound=42))]
+   |                                  ^^
+
+error: expected derivative bound attribute to be a string: `bound = "..."`
+  --> $DIR/error-bound-must-be-string.rs:35:32
+   |
+35 |     #[derivative(Default(bound=42))]
+   |                                ^^
+
+error: expected derivative bound attribute to be a string: `bound = "..."`
+  --> $DIR/error-bound-must-be-string.rs:43:34
+   |
+43 |     #[derivative(PartialEq(bound=42))]
+   |                                  ^^
+
+error: expected derivative bound attribute to be a string: `bound = "..."`
+  --> $DIR/error-bound-must-be-string.rs:48:25
+   |
+48 | #[derivative(Hash(bound=42))]
+   |                         ^^
