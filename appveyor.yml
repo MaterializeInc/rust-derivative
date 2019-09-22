@@ -32,11 +32,11 @@ install:
 build: false
 
 test_script:
-  - if "%CONFIGURATION%" == "nightly" (set FEATURES="--features=test-nightly") else (set FEATURES=)
+  - if not "%CONFIGURATION%" == "1.15.0" (set FEATURES="--features=test-nightly") else (set FEATURES=)
   - cargo build --verbose %FEATURES%
   - cargo test --verbose %FEATURES%
   - cargo clean
-  - if "%CONFIGURATION%" == "nightly" (set FEATURES="--features=test-nightly,use_core") else (set FEATURES="--features=use_core")
+  - if not "%CONFIGURATION%" == "1.15.0" (set FEATURES="--features=test-nightly,use_core") else (set FEATURES="--features=use_core")
   - cargo test --verbose %FEATURES%
   - if defined HAS_CLIPPY cargo clippy --verbose %FEATURES%
 

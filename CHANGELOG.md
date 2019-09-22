@@ -2,6 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 ## 1.0.4 (Not released yet)
+* Error messages now include spans
 * Implement `PartialOrd` and `Ord` deriving
 
 ## 1.0.3
